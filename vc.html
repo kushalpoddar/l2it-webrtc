@@ -1,0 +1,69 @@
+<html>
+  <head>
+    <style>
+      #outgoing {
+        width: 600px;
+        word-wrap: break-word;
+        white-space: normal;
+      }
+    </style>
+  </head>
+
+  <body>
+    <form>
+      <textarea id="incoming"></textarea>
+      <button type="submit">submit</button>
+    </form>
+    <pre id="outgoing"></pre>
+    <video src="" id="video"></video>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js" integrity="sha512-0f7Ahsuvr+/P2btTY4mZIw9Vl23lS6LY/Y7amdkmUg2dqsUF+cTe4QjWvj/NIBHJoGksOiqndKQuI9yzn2hB0g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      // This allows you to determine whether the microphone and camera are ready for use.
+      navigator.mediaDevices.enumerateDevices().then(function (devices) {
+        devices.forEach(function (device) {
+          console.log(
+            device.kind + ": " + device.label + " id = " + device.deviceId
+          );
+        });
+      });
+
+      navigator.mediaDevices
+        .getUserMedia({
+          video: false,
+          audio: true,
+        })
+        .then((stream) => {
+          const p = new SimplePeer({
+            initiator: location.hash === "#1",
+            trickle: false,
+            stream,
+          });
+          p.on("error", (err) => console.log("error", err));
+          p.on("signal", (data) => {
+            console.log("SIGNAL", JSON.stringify(data));
+            document.querySelector("#outgoing").textContent =
+              JSON.stringify(data);
+          });
+          document.querySelector("form").addEventListener("submit", (ev) => {
+            ev.preventDefault();
+            p.signal(JSON.parse(document.querySelector("#incoming").value));
+          });
+          p.on("connect", () => {
+            console.log("CONNECT");
+            p.send("whatever" + Math.random()); // Or Files
+          });
+          p.on("data", (data) => {
+            console.log("data: " + data);
+          });
+          p.on("stream", function (stream) {
+            let video = document.getElementById("video");
+            video.srcObject = stream;
+            video.play();
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    </script>
+  </body>
+</html>

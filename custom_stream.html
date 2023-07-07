@@ -1,0 +1,86 @@
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<div style="display: flex; width : 100%"><button onclick="start()">Start</button></div>
+<div id="box">
+    <video width="200" id="video1" autoplay></video>
+<video style="display: none;" width="200" id="video2"></video>
+</div>
+
+<script>
+    // For tracking which video url should be played in which video element
+    let currentIndex = 0
+    let currentIndexPlay = 0
+    let video_urls = []
+    let video1 = document.getElementById('video1');
+    let video2 = document.getElementById('video2');
+    let box = document.getElementById('box')
+    let videos_obj = [{ dom : video1, id : 1, dom2 : video2}, {dom : video2, id : 2, dom2 : video1}]
+
+    for(let video_obj of videos_obj){
+        video_obj.dom.addEventListener("ended", function(){
+            video_urls[currentIndexPlay].isPlayed = true
+
+            currentIndexPlay += 1
+            video_obj.dom.style.display = "none"
+
+            console.log(video_urls[currentIndexPlay])
+            videos_obj[video_urls[currentIndexPlay].videoElementIndex].dom.src = video_urls[currentIndexPlay].url
+            video_obj.dom2.style.display = "block"
+            // video_obj.dom2.style.display = "block"
+            video_obj.dom2.play()
+            // video1.currentTime = video.duration
+            console.log("Switching Video at", video_obj.dom.duration)
+        })
+    }
+
+  function setVideoURL(url, is_play=false){
+    let video = null, videoElementIndex = 0
+    if(currentIndex % 2 == 0){
+        // video = videos_obj[0].dom
+        videoElementIndex = 0
+        console.log(`Will play video chunk ${currentIndex + 1} in DOM video1`)
+    }else{
+        // video = videos_obj[1].dom
+        videoElementIndex = 1
+        console.log(`Will play video chunk ${currentIndex + 1} in DOM video2`)
+    }
+    video_urls.push({ url, videoElementIndex, isPlayed : false })
+
+    video = document.createElement('video');
+
+    video.src = url;
+    video.autoplay = true;
+    video.width = 200
+    video.id = `video${currentIndex + 1}`
+    video.style.display = "none"
+    box.appendChild(video)
+    
+    if(is_play){
+        video.src = url
+        console.log("Start Playing")
+        video.play()
+    }
+  }
+
+  
+  function start(){
+    let urls = [
+        "https://onezot-test.s3.ap-south-1.amazonaws.com/001.mp4",
+        "https://onezot-test.s3.ap-south-1.amazonaws.com/002.mp4",
+        "https://onezot-test.s3.ap-south-1.amazonaws.com/003.mp4",
+        "https://onezot-test.s3.ap-south-1.amazonaws.com/004.mp4",
+        "https://onezot-test.s3.ap-south-1.amazonaws.com/005.mp4",
+        "https://onezot-test.s3.ap-south-1.amazonaws.com/006.mp4",
+        "https://onezot-test.s3.ap-south-1.amazonaws.com/007.mp4"
+    ]
+    setVideoURL("https://onezot-test.s3.ap-south-1.amazonaws.com/000.mp4", true)
+    setInterval(() => {
+        if(urls.length){
+            const video_url = urls.shift()
+            // video_urls.push(video_url)
+            currentIndex += 1
+            setVideoURL(video_url)
+        }
+    }, 2800)
+}
+  
+</script>

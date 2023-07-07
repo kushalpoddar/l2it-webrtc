@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <style>
+      #outgoing {
+        width: 600px;
+        word-wrap: break-word;
+        white-space: normal;
+      }
+    </style>
+  </head>
+
+  <body>
+    <form>
+      <button type="button" onclick="startConnection()">Connect</button>
+      <button type="button" onclick="answerSignal()">Answer</button>
+    </form>
+    <pre id="outgoing"></pre>
+    <video src="" id="video"></video>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js" integrity="sha512-0f7Ahsuvr+/P2btTY4mZIw9Vl23lS6LY/Y7amdkmUg2dqsUF+cTe4QjWvj/NIBHJoGksOiqndKQuI9yzn2hB0g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js" integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <script>
+      // This allows you to determine whether the microphone and camera are ready for use.
+      navigator.mediaDevices.enumerateDevices().then(function (devices) {
+        devices.forEach(function (device) {
+          console.log(
+            device.kind + ": " + device.label + " id = " + device.deviceId
+          );
+        });
+      });
+
+      // Variables
+      let offer_sdp = null, answer_sdp = null, peer = null
+
+      async function startConnection(){
+        const resp = await axios.post("http://localhost:4566", {
+            sdp : offer_sdp
+        })
+        answer_sdp = resp.data.sdp
+        alert("Got answer")
+      }
+
+      function answerSignal(){
+            peer.signal(answer_sdp);
+        }
+
+      navigator.mediaDevices
+        .getUserMedia({
+          video: false,
+          audio: true,
+        })
+        .then((stream) => {
+          const p = new SimplePeer({
+            initiator: location.hash === "#1",
+            trickle: false,
+            stream,
+          });
+          peer = p
+
+          p.on("error", (err) => console.log("error", err));
+          p.on("signal", (data) => {
+            alert("Got My Signal")
+            offer_sdp = data
+          });
+
+          p.on("connect", () => {
+            console.log("CONNECT");
+            p.send("whatever" + Math.random()); // Or Files
+          });
+          p.on("data", (data) => {
+            console.log("data: " + data);
+          });
+          p.on("stream", function (stream) {
+            let video = document.getElementById("video");
+            video.srcObject = stream;
+            video.play();
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    </script>
+  </body>
+</html>

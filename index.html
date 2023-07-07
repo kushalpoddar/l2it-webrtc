@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <button onclick="createOffer()">Create Offer</button>
+        <button onclick="connect()">Call</button>
+        <textarea id="message" placeholder="Message"></textarea>
+        <button onclick="sendMessage()">Send Message</button>
+        <button onclick="getVideo()">GET Video</button>
+    </body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js" integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        const lc = new RTCPeerConnection()
+        const dc = lc.createDataChannel("channel")
+        dc.onmessage = (e) => {
+            console.log("Message: ", e.data)
+        }
+        dc.onopen = (e) => {
+            console.log("Datachannel Connection Opened")
+        }
+        dc.onclose = (e) => {
+            console.log("Datachannel Connection Closed")
+        }
+        lc.onicecandidate = (e) => {
+            console.log("NEW ICE", JSON.stringify(lc.localDescription))
+        }
+        
+        function createOffer(){
+            lc.createOffer().then(o => {
+                lc.setLocalDescription(o)
+            }).then(o => {
+                console.log("Offer created successfully")
+            })
+        }
+        
+        function connect(){
+            axios.post("http://localhost:4566", {
+                sdp : lc.localDescription
+            }).then(res => {
+                const sdp = res.data.sdp
+                console.log(sdp)
+                lc.setRemoteDescription(sdp)
+                setInterval(() => {
+                    console.log("Connection State: ", lc.connectionState)
+                }, 1000)
+            })
+        }
+
+        function getVideo(){
+            axios.get("http://localhost:4566/stream")
+        }
+
+        lc.onaddstream = function(event) {
+            console.log({event  : event.stream})
+            // videoElement.srcObject = event.stream;
+        };
+
+        function sendMessage(){
+            dc.send(document.getElementById("message").value)
+        }
+    </script>
+</html>

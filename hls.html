@@ -1,0 +1,48 @@
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<div style="display: flex; width : 100%"><button onclick="start()">Start</button></div>
+<video width="200" id="video" autoplay></video>
+<video style="display: none;" width="200" id="video1"></video>
+<script>
+  var video = document.getElementById('video');
+  video.addEventListener("ended", function(){
+    video1.play()
+    video.style.display = "none"
+    video1.style.display = "block"
+    video1.currentTime = video.duration
+    // console.log("wt", video.duration)
+  })
+  var video1 = document.getElementById('video1');
+
+  function playHLS(video, url){
+    const hls = new Hls();
+    hls.loadSource(url);
+    hls.attachMedia(video);
+    // setTimeout(() => {
+    //   console.log("CHANGING")
+    //   // hls.loadSource('http://localhost:4566/3.m3u8');
+    //   hls.attachMedia(video1);
+    // }, 3000)
+  }
+
+  function start(){
+    if(Hls.isSupported()) {
+
+playHLS(video, 'http://localhost:4566/1.m3u8')
+
+setTimeout(() => {
+  console.log("NEW CHUNK LOADED")
+  playHLS(video1, 'http://localhost:4566/3.m3u8')
+}, 6000)
+}
+// hls.js is not supported on platforms that do not have Media Source Extensions (MSE) enabled.
+// When the browser has built-in HLS support (check using `canPlayType`), we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video element throught the `src` property.
+// This is using the built-in support of the plain video element, without using hls.js.
+else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+video.src = 'https://video-dev.github.io/streams/x36xhzz/x36xhzz.m3u8';
+video.addEventListener('canplay',function() {
+  video.play();
+});
+}
+  }
+  
+</script>
